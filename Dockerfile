@@ -1,5 +1,5 @@
 # Dockerfile for Laravel 12 + Filament on Render
-FROM php:8.2-fpm-alpine
+FROM php:8.3-fpm-alpine
 
 # Install base packages
 RUN apk add --no-cache nginx bash curl git ca-certificates
