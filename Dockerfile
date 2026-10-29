@@ -1,4 +1,4 @@
-# Dockerfile for Laravel 12 + Filament on Koyeb / Cloud Deployments
+# Dockerfile for Laravel 12 + Filament on Render
 FROM php:8.2-fpm-alpine
 
 # Install system dependencies & PHP extensions
@@ -14,7 +14,7 @@ RUN apk add --no-cache \
     icu-dev \
     oniguruma-dev \
     bash \
-    netcat-openbsd
+    ca-certificates
 
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
@@ -36,8 +36,8 @@ WORKDIR /var/www/html
 # Copy project files
 COPY . .
 
-# Install composer dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Install composer dependencies (skip scripts during build so it does not fail without env)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
@@ -46,11 +46,11 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Copy Nginx configuration
 COPY ./nginx.conf /etc/nginx/http.d/default.conf
 
-# Copy entrypoint script
+# Copy entrypoint script and ensure Unix LF line endings
 COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
 
-# Expose port (Koyeb default is 8000)
+# Expose port (Render uses 8000)
 EXPOSE 8000
 
 CMD ["/usr/local/bin/entrypoint.sh"]
