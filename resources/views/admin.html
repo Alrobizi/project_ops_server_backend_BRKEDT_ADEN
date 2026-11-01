@@ -2292,6 +2292,15 @@
       const [connectionStatus, setConnectionStatus] = useState("connecting"); // 'connected' | 'demo' | 'connecting' | 'error'
       const [isLiveMode, setIsLiveMode] = useState(false);
       const [apiModalOpen, setApiModalOpen] = useState(false);
+      // بيانات المستخدم المسجّل (تُحفظ في localStorage بعد تسجيل الدخول) — لعرضها في بطاقة البروفايل
+      const [adminUser, setAdminUser] = useState(() => {
+        try {
+          const raw = localStorage.getItem("barakat_admin_user");
+          return raw ? JSON.parse(raw) : null;
+        } catch (e) {
+          return null;
+        }
+      });
       const [apiLoading, setApiLoading] = useState(false);
       const [apiError, setApiError] = useState(null);
       const [toast, setToast] = useState(null);
@@ -2408,6 +2417,9 @@
           if (isLocalDev) {
             try {
               await BarakatApi.login("admin@store.test", "password");
+              try {
+                setAdminUser(JSON.parse(localStorage.getItem("barakat_admin_user") || "null"));
+              } catch (e) { /* تجاهل */ }
               await fetchLiveDashboardAndOrders(false);
               return;
             } catch (err) {
@@ -2427,7 +2439,8 @@
         setApiError(null);
         try {
           BarakatApi.setBaseUrl(apiUrl);
-          await BarakatApi.login(email, password);
+          const loginRes = await BarakatApi.login(email, password);
+          setAdminUser(loginRes?.data?.user || null);
           await fetchLiveDashboardAndOrders(false);
           setApiModalOpen(false);
           showToast("تم تسجيل الدخول والربط بالخادم بنجاح! 🟢");
@@ -2441,6 +2454,7 @@
       const handleSwitchToDemo = () => {
         setIsLiveMode(false);
         setConnectionStatus("demo");
+        setAdminUser(null);
         setOrders(INITIAL_ORDERS);
         setProducts(INITIAL_PRODUCTS);
         setCustomers(INITIAL_CUSTOMERS);
@@ -2696,14 +2710,18 @@
               >
                 <div className="relative flex-shrink-0">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 text-white flex items-center justify-center font-bold text-sm shadow-soft">
-                    م
+                    {(adminUser?.name || "مدير المتجر").trim().charAt(0)}
                   </div>
                   <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-[#131B2E]"></span>
                 </div>
                 {!sidebarCollapsed && (
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">مدير المتجر</p>
-                    <p className="text-[11px] text-slate-400 truncate">admin@store.test</p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
+                      {adminUser?.name || "مدير المتجر"}
+                    </p>
+                    <p className="text-[11px] text-slate-400 truncate">
+                      {adminUser?.email || (isLiveMode ? "متصل بالخادم" : "وضع المعاينة التجريبي")}
+                    </p>
                   </div>
                 )}
               </div>
