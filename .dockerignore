@@ -8,3 +8,4 @@ storage/*.key
 .env.backup
 .phpunit.result.cache
 *.log
+
