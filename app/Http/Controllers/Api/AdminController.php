@@ -379,6 +379,7 @@ class AdminController extends Controller
             'admin_permissions' => 'nullable|array',
             'admin_permissions.*' => 'string',
             'is_blocked' => 'nullable|boolean',
+            'password' => 'nullable|string|min:6',
         ]);
 
         if (isset($validated['role'])) {
@@ -389,6 +390,9 @@ class AdminController extends Controller
         }
         if (isset($validated['is_blocked'])) {
             $user->is_blocked = $validated['is_blocked'];
+        }
+        if (!empty($validated['password'])) {
+            $user->password = $validated['password'];
         }
         $user->save();
 
