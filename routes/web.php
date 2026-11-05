@@ -16,4 +16,12 @@ Route::get('/app/{any?}', function () {
     return view('welcome');
 })->where('any', '.*');
 
+Route::get('/admin', function () {
+    return response()->file(resource_path('views/admin.html'), [
+        'Cache-Control' => 'no-cache, no-store, must-revalidate',
+        'Pragma' => 'no-cache',
+        'Expires' => '0',
+    ]);
+});
+
 
