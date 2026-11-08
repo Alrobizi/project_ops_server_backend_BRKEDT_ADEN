@@ -42,12 +42,21 @@ class AuthController extends BaseApiController
 
     public function login(Request $request): JsonResponse
     {
+        // يقبل البريد الإلكتروني أو رقم الهاتف في حقل email أو phone
+        $loginField = $request->input('email') ?? $request->input('phone') ?? $request->input('login');
+
         $request->validate([
-            'email' => ['required', 'email'],
             'password' => ['required', 'string'],
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        if (blank($loginField)) {
+            return $this->error('يرجى إدخال البريد الإلكتروني أو رقم الهاتف', 422);
+        }
+
+        // البحث بالبريد الإلكتروني أولاً، ثم رقم الهاتف
+        $user = filter_var($loginField, FILTER_VALIDATE_EMAIL)
+            ? User::where('email', $loginField)->first()
+            : User::where('phone', $loginField)->orWhere('email', $loginField)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
