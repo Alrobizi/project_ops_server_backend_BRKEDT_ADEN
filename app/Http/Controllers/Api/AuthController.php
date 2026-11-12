@@ -243,6 +243,11 @@ class AuthController extends BaseApiController
 
     public function logout(Request $request): JsonResponse
     {
+        // فصل جهاز الإشعارات قبل إبطال التوكن: لو فشل طلب الحذف من التطبيق
+        // (نوم الخدمة على Render مثلاً) فلا يبقى الجهاز يستقبل إشعارات
+        // هذا الحساب بعد أن يسجّل عليه شخص آخر.
+        $request->user()->update(['fcm_token' => null]);
+
         $request->user()->currentAccessToken()->delete();
 
         return $this->success(null, 'تم تسجيل الخروج بنجاح');
